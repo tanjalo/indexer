@@ -167,4 +167,6 @@ module.exports = function (router, callback) {
       res.easy(err, err ? undefined : json.height)
     })
   })
+
+  callback()
 }
