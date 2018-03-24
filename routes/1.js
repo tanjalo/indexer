@@ -167,40 +167,4 @@ module.exports = function (router, callback) {
       res.easy(err, err ? undefined : json.height)
     })
   })
-
-  let AUTH_KEYS = {}
-
-  // regtest features
-  function authMiddleware (req, res, next) {
-    if (!req.query.key) return res.easy(401)
-    let hash = bitcoin.crypto.sha256(req.query.key).toString('hex')
-    if (hash in AUTH_KEYS) return next()
-    res.easy(401)
-  }
-
-  router.post('/r/generate', authMiddleware, (req, res) => {
-    rpc('getnewaddress', [], (err, address) => {
-      if (err) return res.easy(err)
-
-      rpc('generatetoaddress', [parseInt(req.query.count) || 1, address], res.easy)
-    })
-  })
-
-  router.post('/r/faucet', authMiddleware, (req, res) => {
-    rpc('sendtoaddress', [req.query.address, parseInt(req.query.value) / 1e8], res.easy)
-  })
-
-  fs.readFile(process.env.KEYDB, (err, buffer) => {
-    if (err) return callback(err)
-
-    buffer
-      .toString('utf8')
-      .split('\n')
-      .filter(x => x)
-      .map(x => bitcoin.crypto.sha256(x).toString('hex')) // XXX: yes, from plain-text :)
-      .forEach(x => (AUTH_KEYS[x] = true))
-    debug(`imported ${Object.keys(AUTH_KEYS).length} authorized keys`.toUpperCase())
-
-    callback()
-  })
 }
